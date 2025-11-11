@@ -1,0 +1,167 @@
+// Prisma schema for Smart Traffic Detection System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with role-based access
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          UserRole @default(NORMAL_USER)
+  phone         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  dailyRoutes   DailyRoute[]
+  alerts        TrafficAlert[]
+  policeRegion  PoliceRegion?
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  TRAFFIC_POLICE
+  DAILY_USER
+  NORMAL_USER
+  ADMIN
+}
+
+// Refresh token for JWT
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique @db.VarChar(500)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// Police region assignment
+model PoliceRegion {
+  id          String   @id @default(uuid())
+  name        String
+  coordinates Json     // Array of coordinates defining the region boundary
+  centerLat   Float
+  centerLng   Float
+  radius      Float    // Radius in kilometers
+  userId      String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alerts TrafficAlert[]
+
+  @@map("police_regions")
+}
+
+// Daily user routes
+model DailyRoute {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  originLat   Float
+  originLng   Float
+  destLat     Float
+  destLng     Float
+  originName  String
+  destName    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alerts TrafficAlert[]
+
+  @@map("daily_routes")
+}
+
+// Traffic alerts
+model TrafficAlert {
+  id              String        @id @default(uuid())
+  routeId         String?       // If from daily route
+  policeRegionId  String?       // Assigned police region
+  userId          String?       // User who triggered (if applicable)
+  severity        AlertSeverity @default(MEDIUM)
+  status          AlertStatus   @default(PENDING)
+  congestionLength Float        // Length of congestion in kilometers
+  startLat        Float
+  startLng        Float
+  endLat          Float
+  endLng          Float
+  startAddress    String?
+  endAddress      String?
+  detectedAt      DateTime      @default(now())
+  resolvedAt      DateTime?
+  notes           String?
+
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  policeRegion  PoliceRegion?  @relation(fields: [policeRegionId], references: [id], onDelete: SetNull)
+  dailyRoute    DailyRoute?    @relation(fields: [routeId], references: [id], onDelete: SetNull)
+
+  @@map("traffic_alerts")
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
+  IGNORED
+}
+
+// Notifications
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional data
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TRAFFIC_ALERT
+  ROUTE_UPDATE
+  SYSTEM_MESSAGE
+  ALERT_RESOLVED
+}
+
+// System logs
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String   // INFO, WARN, ERROR
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("system_logs")
+}
+
