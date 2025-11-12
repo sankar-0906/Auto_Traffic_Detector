@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  POLICE
+  USER
+  DAILY_USER
+}
+
+enum AlertStatus {
+  PENDING
+  RESOLVED
+  IGNORED
+}
+
+enum TrafficSeverity {
+  LOW
+  MODERATE
+  HIGH
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  region        Region?
+  routes        Route[]
+  notifications Notification[]
+  alerts        Alert[]
+
+  @@map("users")
+}
+
+model Region {
+  id            String   @id @default(uuid())
+  policeId      String   @unique
+  name          String
+  startLat      Float
+  startLng      Float
+  endLat        Float
+  endLng        Float
+  coordinates   Json?    // Store polyline coordinates
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  police        User     @relation(fields: [policeId], references: [id], onDelete: Cascade)
+  alerts        Alert[]
+
+  @@map("regions")
+}
+
+model Alert {
+  id            String         @id @default(uuid())
+  regionId      String
+  userId        String?
+  trafficLevel  TrafficSeverity
+  lengthKm      Float
+  message       String?
+  status        AlertStatus    @default(PENDING)
+  detectedAt    DateTime       @default(now())
+  resolvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  region        Region         @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  notifications Notification[]
+
+  @@map("alerts")
+}
+
+model Route {
+  id            String    @id @default(uuid())
+  userId        String
+  name          String?
+  sourceLat     Float
+  sourceLng     Float
+  destinationLat Float
+  destinationLng Float
+  sourceAddress String?
+  destAddress   String?
+  isDaily       Boolean   @default(false)
+  alertTimeStart String?  // e.g., "08:00"
+  alertTimeEnd   String?  // e.g., "10:00"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("routes")
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  userId        String
+  alertId       String?
+  message       String
+  type          String    // "TRAFFIC_ALERT", "ROUTE_UPDATE", "SYSTEM"
+  isRead        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alert         Alert?    @relation(fields: [alertId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
+

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Google Places Autocomplete Styling */
+.pac-container {
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin-top: 4px;
+  z-index: 1000;
+  background-color: white;
+}
+
+.pac-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pac-item:first-child {
+  border-top: none;
+}
+
+.pac-item:hover {
+  background-color: #f3f4f6;
+}
+
+.pac-item-selected {
+  background-color: #dbeafe;
+}
+
+.pac-icon {
+  margin-right: 8px;
+}
+
+.pac-matched {
+  font-weight: 600;
+  color: #2563eb;
+}

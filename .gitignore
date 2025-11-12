@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+# Note: package-lock.json files should be committed (not ignored)
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+dist/
+build/
+
+# Prisma
+backend/prisma/migrations/
+
